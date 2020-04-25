@@ -14,6 +14,7 @@ This is official Pytorch implementation of LoTeNet model in
 
 * Basic Pytorch dependency
 * Tested on Pytorch 1.3, Python 3.6 
+* Download the data from [here](https://bitbucket.org/raghavian/lotenet_pytorch/src/master/data/lidc.zip)
 * Unzip the data and point the path to --data_path
 * How to run tests: python train.py --data_path data_location
 
