@@ -73,9 +73,9 @@ feature_dim = 2
 logFile = time.strftime("%Y%m%d_%H_%M")+'.txt'
 makeLogFile(logFile)
 
-
+normTensor = 0.5*torch.ones(args.nChannel)
 ### Data processing and loading....
-trans_valid = transforms.Compose([transforms.Normalize(mean=[0.5],std=[0.5])])
+trans_valid = transforms.Compose([transforms.Normalize(mean=normTensor,std=normTensor)])
 
 if args.aug:
 	trans_train = transforms.Compose([transforms.ToPILImage(),
@@ -83,16 +83,19 @@ if args.aug:
 						  transforms.RandomVerticalFlip(),
 						  transforms.RandomRotation(20),
 						  transforms.ToTensor(),
-						  transforms.Normalize(mean=[0.5],std=[0.5])])
+						  transforms.Normalize(mean=normTensor,std=normTensor)])
 	print("Using Augmentation....")
 else:
 	trans_train = trans_valid
 	print("No augmentation....")
 
 # Load processed LIDC data 
-dataset_train = LIDC(split='Train', data_dir=args.data_path, transform=trans_train,rater=4)
-dataset_valid = LIDC(split='Valid', data_dir=args.data_path, transform=trans_valid,rater=4)
-dataset_test = LIDC(split='Test', data_dir=args.data_path, transform=trans_valid,rater=4)
+dataset_train = LIDC(split='Train', data_dir=args.data_path, 
+					transform=trans_train,rater=4)
+dataset_valid = LIDC(split='Valid', data_dir=args.data_path, 
+					transform=trans_valid,rater=4)
+dataset_test = LIDC(split='Test', data_dir=args.data_path, 
+					transform=trans_valid,rater=4)
 
 num_train = len(dataset_train)
 num_valid = len(dataset_valid)
@@ -161,11 +164,10 @@ for epoch in range(args.num_epochs):
 		labelsNp = np.concatenate((labelsNp, labels.cpu().numpy()))
 		scores = torch.sigmoid(model(inputs))
 		preds = scores
-
 		loss = loss_fun(scores, labels)
 
 		with torch.no_grad():
-			predsNp = np.concatenate((predsNp, preds.cpu().numpy()))
+			predsNp = np.concatenate((predsNp, preds.detach().cpu().numpy()))
 			running_loss += loss
 
 		# Backpropagate and update parameters
