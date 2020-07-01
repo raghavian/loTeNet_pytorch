@@ -23,9 +23,7 @@ class loTeNet(nn.Module):
 
 		self.nCh = nCh
 		self.ker = kernel		 
-#		pdb.set_trace()
 		iDim = (self.input_dim/(self.ker))
-#		 d = int(self.input_dim/self.ker)
 
 		feature_dim = 2*nCh 
 
@@ -39,7 +37,6 @@ class loTeNet(nn.Module):
 		self.BN1 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
 		iDim = iDim/self.ker
-#		d = int(d/self.ker)
 		feature_dim = 2*self.virtual_dim
 
 		self.module2 = nn.ModuleList([ MPS(input_dim=self.ker**2, 
@@ -52,7 +49,6 @@ class loTeNet(nn.Module):
 		self.BN2 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
 		iDim = iDim/self.ker
-#		d = int(d/self.ker)
 
 		self.module3 = nn.ModuleList([ MPS(input_dim=self.ker**2, 
 										   output_dim=self.virtual_dim, 
@@ -69,11 +65,8 @@ class loTeNet(nn.Module):
 
 	def forward(self,x):
 
-#		pdb.set_trace()
 		b = x.shape[0] #Batch size
 		iDim = self.input_dim/(self.ker)
-
-#		d = self.input_dim
 
 		# Level 1 contraction		 
 		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1]).reshape(b,
@@ -83,21 +76,21 @@ class loTeNet(nn.Module):
 		y = self.BN1(y).unsqueeze(1)
 
 		# Level 2 contraction
-#		d = int(self.input_dim/self.ker)
 
 		y = y.view(b,self.virtual_dim,iDim[0],iDim[1])
 		iDim = (iDim/self.ker)
-		y = y.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
+		y = y.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],
+				iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
 		x = [ self.module2[i](y[:,:,i]) for i in range(len(self.module2))]
 		x = torch.stack(x,dim=1)
 		x = self.BN2(x).unsqueeze(1)
 
 
 		# Level 3 contraction
-#		d = int(d/self.ker)
 		x = x.view(b,self.virtual_dim,iDim[0],iDim[1])
 		iDim = (iDim/self.ker)
-		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
+		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],
+				iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
 		y = [ self.module3[i](x[:,:,i]) for i in range(len(self.module3))]
 
 		y = torch.stack(y,dim=1)
