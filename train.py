@@ -9,6 +9,8 @@ from utils.tools import *
 from models.Densenet import *
 import argparse
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def evaluate(loader):
 
 	with torch.no_grad():
@@ -20,9 +22,8 @@ def evaluate(loader):
 		for i, (inputs, labels) in enumerate(loader):
 
 			b = inputs.shape[0]
-			if cuda:
-				inputs, labels = inputs.cuda(),labels.cuda()
-
+			inputs = inputs.to(device)
+			labels = labels.to(device)
 			labelsNp = np.concatenate((labelsNp, labels.cpu().numpy()))
 
 			scores = torch.sigmoid(model(inputs))
@@ -60,14 +61,13 @@ batch_size = args.batch_size
 # LoTeNet parameters
 adaptive_mode = False 
 periodic_bc   = False
-cuda = True
-cuda = cuda and torch.cuda.is_available()
+
 kernel = 2 # Stride in terms of image H/W
-d = kernel
+#d = kernel
 output_dim = 1 
-input_dim = 32 
-dim = 128
-nCh = int(dim/input_dim)**2 * args.nChannel
+#input_dim = 32 
+dim = torch.ShortTensor([128,128])
+nCh = args.nChannel #int(dim/input_dim)**2 * args.nChannel
 feature_dim = 2
 
 logFile = time.strftime("%Y%m%d_%H_%M")+'.txt'
@@ -112,9 +112,9 @@ loader_test = DataLoader(dataset = dataset_test, drop_last=True,
 # Initialize the models
 if not args.dense_net:
 	print("Using LoTeNet")
-	model = loTeNet(input_dim=input_dim, output_dim=output_dim, 
+	model = loTeNet(input_dim=dim, output_dim=output_dim, 
 				  nCh=nCh, kernel=kernel,
-				  bond_dim=args.bond_dim, cudaFlag=cuda, feature_dim=feature_dim,
+				  bond_dim=args.bond_dim, feature_dim=feature_dim,
 				  adaptive_mode=adaptive_mode, periodic_bc=periodic_bc, virtual_dim=1)
 else:
 	print("Densenet Baseline!")
@@ -134,12 +134,9 @@ with open(logFile,"a") as f:
 	print("Number of parameters:%d"%(nParam),file=f)
 
 print(f"Using Adam w/ learning rate = {args.lr:.1e}")
-print("Input_dim: %d, Feature_dim: %d, nCh: %d, B:%d"%(input_dim,feature_dim,nCh,batch_size))
+print("Feature_dim: %d, nCh: %d, B:%d"%(feature_dim,nCh,batch_size))
 
-if cuda:
-		print("Using CUDA")
-		model = model.cuda()
-
+model = model.to(device)
 nValid = len(loader_valid)
 nTrain = len(loader_train)
 nTest = len(loader_test)
@@ -159,8 +156,8 @@ for epoch in range(args.num_epochs):
 	labelsNp = np.zeros(1)
 	for i, (inputs, labels) in enumerate(loader_train):
 		b = inputs.shape[0]
-		if cuda:
-			inputs, labels = inputs.cuda(),labels.cuda()
+		inputs = inputs.to(device)
+		labels = labels.to(device)
 		labelsNp = np.concatenate((labelsNp, labels.cpu().numpy()))
 		scores = torch.sigmoid(model(inputs))
 		preds = scores
