@@ -63,9 +63,7 @@ adaptive_mode = False
 periodic_bc   = False
 
 kernel = 2 # Stride in terms of image H/W
-#d = kernel
 output_dim = 1 
-#input_dim = 32 
 dim = torch.ShortTensor([128,128])
 nCh = args.nChannel #int(dim/input_dim)**2 * args.nChannel
 feature_dim = 2
