@@ -27,9 +27,10 @@ class loTeNet(nn.Module):
 		iDim = (self.input_dim/(self.ker))
 
 		feature_dim = 2*nCh 
-
+		
+		### First level MPS blocks
 		self.module1 = nn.ModuleList([ MPS(input_dim=(self.ker)**2,
-										   output_dim=self.virtual_dim, 
+			output_dim=self.virtual_dim, 
 			nCh=nCh, bond_dim=bond_dim, 
 			feature_dim=feature_dim, parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
@@ -37,11 +38,13 @@ class loTeNet(nn.Module):
 
 		self.BN1 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
+		
 		iDim = iDim/self.ker
 		feature_dim = 2*self.virtual_dim
-
+		
+		### Second level MPS blocks
 		self.module2 = nn.ModuleList([ MPS(input_dim=self.ker**2, 
-										   output_dim=self.virtual_dim, 
+			output_dim=self.virtual_dim, 
 			nCh=self.virtual_dim, bond_dim=bond_dim,
 			feature_dim=feature_dim,  parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc)
@@ -51,19 +54,22 @@ class loTeNet(nn.Module):
 
 		iDim = iDim/self.ker
 
-		self.module3 = nn.ModuleList([ MPS(input_dim=self.ker**2, 
-										   output_dim=self.virtual_dim, 
+		### Third level MPS blocks
+		self.module3 = nn.ModuleList([ MPS(input_dim=self.ker**2,
+			output_dim=self.virtual_dim, 
 			nCh=self.virtual_dim, bond_dim=bond_dim,  
 			feature_dim=feature_dim, parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
 									  for i in range(torch.prod(iDim))])
 		self.BN3 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
-		self.mpsFinal = MPS(input_dim=len(self.module3), output_dim=output_dim, nCh=1,
+		### Final MPS block
+		self.mpsFinal = MPS(input_dim=len(self.module3), 
+				output_dim=output_dim, nCh=1,
 				bond_dim=bond_dim, feature_dim=feature_dim, 
-				adaptive_mode=adaptive_mode, periodic_bc=periodic_bc, parallel_eval=parallel_eval)
+				adaptive_mode=adaptive_mode, periodic_bc=periodic_bc, 
+				parallel_eval=parallel_eval)
 		
-
 	def forward(self,x):
 
 		b = x.shape[0] #Batch size
