@@ -34,7 +34,7 @@ class loTeNet(nn.Module):
 			nCh=nCh, bond_dim=bond_dim, 
 			feature_dim=feature_dim, parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
-									  for i in range(torch.prod(iDim))])
+			for i in range(torch.prod(iDim))])
 
 		self.BN1 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
@@ -48,7 +48,7 @@ class loTeNet(nn.Module):
 			nCh=self.virtual_dim, bond_dim=bond_dim,
 			feature_dim=feature_dim,  parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc)
-									  for i in range(torch.prod(iDim))])
+			for i in range(torch.prod(iDim))])
 
 		self.BN2 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
@@ -60,7 +60,8 @@ class loTeNet(nn.Module):
 			nCh=self.virtual_dim, bond_dim=bond_dim,  
 			feature_dim=feature_dim, parallel_eval=parallel_eval,
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
-									  for i in range(torch.prod(iDim))])
+			for i in range(torch.prod(iDim))])
+
 		self.BN3 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
 
 		### Final MPS block
