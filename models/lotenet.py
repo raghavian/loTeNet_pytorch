@@ -17,6 +17,7 @@ class loTeNet(nn.Module):
 		self.input_dim = input_dim
 		self.virtual_dim = bond_dim
 		
+		### Squeezing of spatial dimension in first step	
 		self.kScale = 4
 		nCh =  self.kScale**2 * nCh
 		self.input_dim = self.input_dim/self.kScale

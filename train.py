@@ -9,9 +9,11 @@ from utils.tools import *
 from models.Densenet import *
 import argparse
 
+# Globally load device identifier
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def evaluate(loader):
+	### Evaluation funcntion for validation/testing
 
 	with torch.no_grad():
 		vl_acc = 0.
@@ -19,24 +21,26 @@ def evaluate(loader):
 		labelsNp = np.zeros(1)
 		predsNp = np.zeros(1)
 		model.eval()
+
 		for i, (inputs, labels) in enumerate(loader):
 
-			b = inputs.shape[0]
 			inputs = inputs.to(device)
 			labels = labels.to(device)
 			labelsNp = np.concatenate((labelsNp, labels.cpu().numpy()))
 
+			# Inference
 			scores = torch.sigmoid(model(inputs))
-			preds = scores
 
+			preds = scores
 			loss = loss_fun(scores, labels)
 			predsNp = np.concatenate((predsNp, preds.cpu().numpy()))
 			vl_loss += loss.item()
+
+		# Compute AUC over the full (valid/test) set
 		vl_acc = computeAuc(labelsNp[1:],predsNp[1:])
-		vl_loss = vl_loss/nValid
+		vl_loss = vl_loss/len(loader)
+
 	return vl_acc, vl_loss
-
-
 
 # Miscellaneous initialization
 torch.manual_seed(1)
@@ -62,10 +66,9 @@ batch_size = args.batch_size
 adaptive_mode = False 
 periodic_bc   = False
 
-kernel = 2 # Stride in terms of image H/W
-output_dim = 1 
-dim = torch.ShortTensor([128,128])
-nCh = args.nChannel #int(dim/input_dim)**2 * args.nChannel
+kernel = 2 # Stride along spatial dimensions
+output_dim = 1 # output dimension
+ 
 feature_dim = 2
 
 logFile = time.strftime("%Y%m%d_%H_%M")+'.txt'
@@ -107,6 +110,10 @@ loader_valid = DataLoader(dataset = dataset_valid, drop_last=True,
 loader_test = DataLoader(dataset = dataset_test, drop_last=True,
 						 batch_size=batch_size, shuffle=False)
 
+# Initiliaze input dimensions
+dim = torch.ShortTensor(list(dataset_train[0][0].shape[1:]))
+nCh = int(dataset_train[0][0].shape[0])
+
 # Initialize the models
 if not args.dense_net:
 	print("Using LoTeNet")
@@ -144,7 +151,7 @@ minLoss = 1e3
 convCheck = 5
 convIter = 0
 
-		# Let's start training!
+# Let's start training!
 for epoch in range(args.num_epochs):
 	running_loss = 0.
 	running_acc = 0.
@@ -152,12 +159,15 @@ for epoch in range(args.num_epochs):
 	model.train()
 	predsNp = np.zeros(1)
 	labelsNp = np.zeros(1)
+
 	for i, (inputs, labels) in enumerate(loader_train):
-		b = inputs.shape[0]
+
 		inputs = inputs.to(device)
 		labels = labels.to(device)
 		labelsNp = np.concatenate((labelsNp, labels.cpu().numpy()))
+
 		scores = torch.sigmoid(model(inputs))
+
 		preds = scores
 		loss = loss_fun(scores, labels)
 
