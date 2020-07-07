@@ -1,7 +1,7 @@
 # README #
 
-This is official Pytorch implementation of LoTeNet model in 
-"[Tensor Networks for Medical Image Classification](https://openreview.net/forum?id=jjk6bxk07G)", Raghavendra Selvan & Erik Dam, MIDL 2020
+This is the official Pytorch implementation of LoTeNet model in 
+"[Tensor Networks for Medical Image Classification](https://openreview.net/forum?id=jjk6bxk07G)", Raghavendra Selvan & Erik Dam, MIDL 2020. Runner up for the best paper award at [MIDL2020](https://2020.midl.io/papers/selvan20.html).
 
 ![lotenet](utils/model.png)
 ### What is this repository for? ###
