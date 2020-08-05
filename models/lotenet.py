@@ -76,6 +76,12 @@ class loTeNet(nn.Module):
 		b = x.shape[0] #Batch size
 		iDim = self.input_dim/(self.ker)
 
+        # Increase input feature channel
+        iDim = self.input_dim
+        if self.kScale > 1:
+			x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1])
+			x = x.reshape(b[0],-1,iDim[0],iDim[1])
+
 		# Level 1 contraction		 
 		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1]).reshape(b,
 					self.nCh,-1,(self.ker)**2)
