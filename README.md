@@ -29,7 +29,7 @@ title={Tensor Networks for Medical Image Classification},
 author={Raghavendra Selvan, Erik B Dam},
 booktitle={International Conference on Medical Imaging with Deep Learning -- Full Paper Track},
 year={2020},
-month={July}
+month={July},
 url={https://openreview.net/forum?id=jjk6bxk07G}}
 ```
 
