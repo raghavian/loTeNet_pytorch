@@ -36,7 +36,7 @@ class loTeNet(nn.Module):
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
 			for i in range(torch.prod(iDim))])
 
-		self.BN1 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
+		self.BN1 = nn.BatchNorm1d(self.virtual_dim,affine=True)
 
 		
 		iDim = iDim // self.ker
@@ -50,7 +50,7 @@ class loTeNet(nn.Module):
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc)
 			for i in range(torch.prod(iDim))])
 
-		self.BN2 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
+		self.BN2 = nn.BatchNorm1d(self.virtual_dim,affine=True)
 
 		iDim = iDim // self.ker
 
@@ -62,7 +62,7 @@ class loTeNet(nn.Module):
 			adaptive_mode=adaptive_mode, periodic_bc=periodic_bc) 
 			for i in range(torch.prod(iDim))])
 
-		self.BN3 = nn.BatchNorm1d(torch.prod(iDim).numpy(),affine=True)
+		self.BN3 = nn.BatchNorm1d(self.virtual_dim,affine=True)
 
 		### Final MPS block
 		self.mpsFinal = MPS(input_dim=len(self.module3), 
@@ -73,48 +73,46 @@ class loTeNet(nn.Module):
 		
 	def forward(self,x):
 		b = x.shape[0] #Batch size
-		iDim = self.input_dim//(self.ker)
 
 		# Increase input feature channel
 		iDim = self.input_dim
 		if self.kScale > 1:
 			x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1])
-			x = x.reshape(b,-1,iDim[0],iDim[1])
+			x = x.reshape(b,iDim[0],iDim[1],-1)
 
 		# Level 1 contraction		 
+		iDim = self.input_dim//(self.ker)
 		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],iDim[1]).reshape(b,
-					self.nCh,-1,(self.ker)**2)
-		y = [ self.module1[i](x[:,:,i]) for i in range(len(self.module1))]
-		y = torch.stack(y,dim=1)
-		y = self.BN1(y).unsqueeze(1)
+					self.nCh,(self.ker)**2,-1)
+		y = [ self.module1[i](x[:,:,:,i]) for i in range(len(self.module1))]
+		y = torch.stack(y,dim=2)
+		y = self.BN1(y)
 
 		# Level 2 contraction
 
 		y = y.view(b,self.virtual_dim,iDim[0],iDim[1])
 		iDim = (iDim//self.ker)
 		y = y.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],
-				iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
-		x = [ self.module2[i](y[:,:,i]) for i in range(len(self.module2))]
-		x = torch.stack(x,dim=1)
-		x = self.BN2(x).unsqueeze(1)
+				iDim[1]).reshape(b,self.virtual_dim,self.ker**2,-1)
+		x = [ self.module2[i](y[:,:,:,i]) for i in range(len(self.module2))]
+		x = torch.stack(x,dim=2)
+		x = self.BN2(x)
 
 
 		# Level 3 contraction
 		x = x.view(b,self.virtual_dim,iDim[0],iDim[1])
 		iDim = (iDim//self.ker)
 		x = x.unfold(2,iDim[0],iDim[0]).unfold(3,iDim[1],
-				iDim[1]).reshape(b,self.virtual_dim,-1,self.ker**2)
-		y = [ self.module3[i](x[:,:,i]) for i in range(len(self.module3))]
+				iDim[1]).reshape(b,self.virtual_dim,self.ker**2,-1)
+		y = [ self.module3[i](x[:,:,:,i]) for i in range(len(self.module3))]
 
-		y = torch.stack(y,dim=1)
+		y = torch.stack(y,dim=2)
 		y = self.BN3(y)
 
-		if self.virtual_dim == 1:
-			y = y.unsqueeze(2)
 		if y.shape[1] > 1:
 		# Final layer
-			y = y.permute(0,2,1)
 			y = self.mpsFinal(y)
-		return y.squeeze()
+
+		return y.view(b)
 
 
